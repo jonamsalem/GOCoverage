@@ -1,0 +1,24 @@
+name: 'Coverage Action'
+description: 'Perform unit tests, generate a coverage report, and check threshold'
+author: 'Jonathan Amsalem'
+inputs:
+  threshold:
+    description: "unit test coverage threshold"
+    required: false
+    default: 70
+runs:
+  using: 'composite'
+  steps:
+    - name: Check Coverage
+      shell: bash
+      run: |
+        echo '${{ inputs.threshold }}' is the chosen threshold for this action.
+        go test -v ./... -coverprofile coverage.out -covermode count
+        coverage=$(go tool cover -func coverage.out | awk '{print $NF, $1}')
+        filtered_coverage=$(echo "$coverage" | awk '{gsub(/%/, ""); if ($1 < '${{ inputs.threshold }}' && $1 != 0) printf "%s:%s%%\n", $2, $1}')
+        if [ -n "$filtered_coverage" ]; then
+          echo "Coverage below threshold in the following files:"
+          echo "$filtered_coverage"
+          exit 1
+        fi
+        echo "Coverage check passed."

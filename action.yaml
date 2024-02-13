@@ -6,6 +6,10 @@ inputs:
     description: "Unit test coverage threshold"
     required: false
     default: 70
+  generate_artifact: 
+    description: "Flag to generate artifact regardless of test"
+    required: false
+    default: false
 runs:
   using: "composite"
   steps:
@@ -16,6 +20,7 @@ runs:
         #!/bin/bash
 
         threshold=${{ inputs.threshold }}
+        generate_artifact=${{inputs.generate_artifact}}
 
         # Run tests and generate coverage report
         go test -v ./... -coverprofile coverage.out -covermode count
@@ -30,7 +35,7 @@ runs:
             if [[ $line =~ \(([0-9.]+)% ]]; then
                 percentage="${BASH_REMATCH[1]}"
                 echo $percentage
-                if (( $(echo "$percentage < $threshold" | bc -l) )); then
+                if (( $(echo "$percentage > 0.0 && $percentage < $threshold" | bc -l) )); then
                     under_threshold+=("$line")
                 fi
             fi
@@ -49,7 +54,7 @@ runs:
         fi
 
     - name: Upload coverage report
-      if: ${{ failure() && steps.coverage_check.outputs.coverage_below_threshold == 'true'}}
+      if: ${{ (failure() && (steps.coverage_check.outputs.coverage_below_threshold == 'true')) || inputs.generate_artifact == 'true' }}
       uses: actions/upload-artifact@v2
       with:
         name: coverage-report

@@ -1,6 +1,6 @@
 # Go-Coverage
 
-This GitHub Action performs unit tests, generates a coverage report, and checks if each file's coverage meets the threshold (default is 70%). If the coverage does not meet the required threshold, the specific files will be listed under the action logs & an HTML coverage report will be generated as an artifact which is stored for 2 days. 
+This GitHub Action performs unit tests, generates a coverage report, and checks if each file's coverage meets the threshold (default is 70%). If the coverage does not meet the required threshold, the specific files will be listed under the action logs & an HTML coverage report will be generated as an artifact which is stored for 2 days. Additonally, users will have the option to generate the artifact regardless of the status of the coverage.
 
 ## Usage
 
@@ -24,4 +24,5 @@ jobs:
       - name: Run Coverage Action
         uses: jonamsalem/GOCoverage@v1
         with:
-          threshold: 80
+          threshold: 80  #custom threshold
+          generate_artifact: true #generate artifact regardless of test status

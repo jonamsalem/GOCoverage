@@ -1,24 +1,57 @@
-name: 'Coverage Action'
-description: 'Perform unit tests, generate a coverage report, and check threshold'
-author: 'Jonathan Amsalem'
+name: "Coverage Action"
+description: "Perform unit tests, generate a coverage report, and check threshold"
+author: "Jonathan Amsalem"
 inputs:
   threshold:
-    description: "unit test coverage threshold"
+    description: "Unit test coverage threshold"
     required: false
     default: 70
 runs:
-  using: 'composite'
+  using: "composite"
   steps:
     - name: Check Coverage
+      id: coverage_check 
       shell: bash
       run: |
-        echo '${{ inputs.threshold }}' is the chosen threshold for this action.
+        #!/bin/bash
+
+        threshold=${{ inputs.threshold }}
+
+        # Run tests and generate coverage report
         go test -v ./... -coverprofile coverage.out -covermode count
-        coverage=$(go tool cover -func coverage.out | awk '{print $NF, $1}')
-        filtered_coverage=$(echo "$coverage" | awk '{gsub(/%/, ""); if ($1 < '${{ inputs.threshold }}' && $1 != 0) printf "%s:%s%%\n", $2, $1}')
-        if [ -n "$filtered_coverage" ]; then
-          echo "Coverage below threshold in the following files:"
-          echo "$filtered_coverage"
-          exit 1
+        go tool cover -html=coverage.out -o coverage.html
+
+        # Extract lines containing coverage percentages
+        selected_lines=$(sed -n '/<select id="files">/,/<\/select>/p' coverage.html | grep -vE '(<select id="files">|<\/select>)' | sed -e 's/<[^>]*>//g')
+
+        # Extract percentages and check if under threshold
+        under_threshold=()
+        while IFS= read -r line; do
+            if [[ $line =~ \(([0-9.]+)% ]]; then
+                percentage="${BASH_REMATCH[1]}"
+                echo $percentage
+                if (( $(echo "$percentage < $threshold" | bc -l) )); then
+                    under_threshold+=("$line")
+                fi
+            fi
+        done <<< "$selected_lines"
+
+        # Print files under threshold
+        if [ ${#under_threshold[@]} -gt 0 ]; then
+            echo "Files under threshold:"
+            for item in "${under_threshold[@]}"; do
+                echo "$item"
+            done
+            echo "::set-output name=coverage_below_threshold::true"
+            exit 1
+        else
+            echo "No lines under threshold."
         fi
-        echo "Coverage check passed."
+
+    - name: Upload coverage report
+      if: ${{ failure() && steps.coverage_check.outputs.coverage_below_threshold == 'true'}}
+      uses: actions/upload-artifact@v2
+      with:
+        name: coverage-report
+        path: coverage.html
+        retention-days: 2 #save artifact for 2 days

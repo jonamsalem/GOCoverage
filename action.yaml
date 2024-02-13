@@ -34,7 +34,6 @@ runs:
         while IFS= read -r line; do
             if [[ $line =~ \(([0-9.]+)% ]]; then
                 percentage="${BASH_REMATCH[1]}"
-                echo $percentage
                 if (( $(echo "$percentage > 0.0 && $percentage < $threshold" | bc -l) )); then
                     under_threshold+=("$line")
                 fi
@@ -43,7 +42,7 @@ runs:
 
         # Print files under threshold
         if [ ${#under_threshold[@]} -gt 0 ]; then
-            echo "Files under threshold:"
+            echo "Files under threshold ( $threshold% ):"
             for item in "${under_threshold[@]}"; do
                 echo "$item"
             done

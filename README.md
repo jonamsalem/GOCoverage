@@ -8,11 +8,11 @@ The logs will display the total statement coverage +  if relevant, the coverage 
 
 When the test fails, an HTML coverage report will be generated as an artifact which is stored for 2 days. 
 
-Additonally, users will have the option to set two custom conditions:
+## Usage
+
+Users will have the option to set two custom conditions:
 * `threshold` - default set to 70%
 * `generate_artifact` -  generate the cover report artifact when test passed (by default set to false). Note that failed tests will ALWAYS generate the report.
-
-## Usage
 
 To use this action in your workflow, create a `.github/workflows/example.yml` file in your repository. Below is an example of how to implement the action:
 ```yaml

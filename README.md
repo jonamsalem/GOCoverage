@@ -32,7 +32,7 @@ jobs:
 
       
       - name: Run Coverage Action
-        uses: jonamsalem/Go-Coverage@v1
+        uses: jonamsalem/Go-Coverage@v2
         with:
           threshold: 80 
           generate_artifact: true
